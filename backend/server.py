@@ -167,6 +167,11 @@ async def get_current_user(request: Request) -> Optional[dict]:
     
     return payload
 
+# API Routes
+@api_router.get("/")
+async def api_root():
+    return {"message": "ConvoTalk API v1.0", "status": "running"}
+
 # Authentication Routes
 @api_router.post("/auth/register")
 async def register(user_data: UserRegister):
