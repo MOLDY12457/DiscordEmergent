@@ -400,25 +400,32 @@ async def get_current_user_info(request: Request):
 # Chat Routes
 @api_router.get("/channels")
 async def get_channels(request: Request):
-    current_user = await get_current_user(request)
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Non authentifié"
-        )
-    
-    channels = await db.channels.find().to_list(length=None)
-    result = []
-    for channel in channels:
-        # Remove MongoDB's _id field 
-        if '_id' in channel:
-            del channel['_id']
-        # Convert datetime to ISO string for JSON serialization
-        if 'created_at' in channel and hasattr(channel['created_at'], 'isoformat'):
-            channel['created_at'] = channel['created_at'].isoformat()
+    try:
+        current_user = await get_current_user(request)
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Non authentifié"
+            )
         
-        result.append(channel)
-    return result
+        channels = await db.channels.find().to_list(length=None)
+        result = []
+        for channel in channels:
+            # Remove MongoDB's _id field 
+            if '_id' in channel:
+                del channel['_id']
+            # Convert datetime to ISO string for JSON serialization
+            if 'created_at' in channel and hasattr(channel['created_at'], 'isoformat'):
+                channel['created_at'] = channel['created_at'].isoformat()
+            
+            result.append(channel)
+        return result
+    except Exception as e:
+        logger.error(f"Error in get_channels: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur serveur: {str(e)}"
+        )
 
 @api_router.post("/channels", response_model=Channel)
 async def create_channel(channel_data: dict, request: Request):
