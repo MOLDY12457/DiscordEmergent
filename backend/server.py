@@ -136,6 +136,9 @@ def create_jwt_token(user_id: str, email: str, username: str) -> str:
 def verify_jwt_token(token: str) -> Optional[dict]:
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        # Convert exp timestamp to timezone-aware datetime for comparison
+        if 'exp' in payload:
+            payload['exp'] = datetime.fromtimestamp(payload['exp'], tz=timezone.utc)
         return payload
     except jwt.ExpiredSignatureError:
         return None
