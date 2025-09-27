@@ -41,14 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Socket.io server
-sio = socketio.AsyncServer(
-    cors_allowed_origins="*",
-    async_mode='asgi',
-    logger=True,
-    engineio_logger=True
-)
-
 # WebSocket connection manager
 class ConnectionManager:
     def __init__(self):
