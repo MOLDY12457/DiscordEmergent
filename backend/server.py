@@ -165,7 +165,15 @@ async def get_current_user(request: Request) -> Optional[dict]:
     
     # Check if session exists in database
     session = await db.sessions.find_one({"session_token": token})
-    if not session or session["expires_at"] < datetime.now(timezone.utc):
+    if not session:
+        return None
+    
+    # Handle timezone comparison
+    expires_at = session["expires_at"]
+    if hasattr(expires_at, 'replace') and expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    
+    if expires_at < datetime.now(timezone.utc):
         return None
     
     return payload
