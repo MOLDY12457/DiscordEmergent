@@ -408,7 +408,17 @@ async def get_channels(request: Request):
         )
     
     channels = await db.channels.find().to_list(length=None)
-    return [Channel(**channel) for channel in channels]
+    result = []
+    for channel in channels:
+        # Remove MongoDB's _id field and ensure datetime fields are properly formatted
+        if '_id' in channel:
+            del channel['_id']
+        # Ensure created_at is datetime, not string
+        if 'created_at' in channel and isinstance(channel['created_at'], str):
+            channel['created_at'] = datetime.fromisoformat(channel['created_at'].replace('Z', '+00:00'))
+        
+        result.append(Channel(**channel))
+    return result
 
 @api_router.post("/channels", response_model=Channel)
 async def create_channel(channel_data: dict, request: Request):
