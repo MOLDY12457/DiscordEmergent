@@ -473,14 +473,22 @@ const ChatPage = ({ user, onLogout }) => {
       </div>
 
       {/* GIF Picker Modal */}
-      <Dialog open={showGifPicker} onOpenChange={setShowGifPicker}>
-        <DialogContent className="sm:max-w-md bg-gray-800 border-gray-700">
-          <DialogHeader>
-            <DialogTitle className="text-white">Choisir un GIF</DialogTitle>
-          </DialogHeader>
-          <GifPicker onGifSelect={handleGifSelect} />
-        </DialogContent>
-      </Dialog>
+      {showGifPicker && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 w-96 max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-semibold">Choisir un GIF</h3>
+              <button
+                onClick={() => setShowGifPicker(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <GifPicker onGifSelect={handleGifSelect} />
+          </div>
+        </div>
+      )}
 
       {/* Video Call Modal */}
       {showVideoCall && callData && (
