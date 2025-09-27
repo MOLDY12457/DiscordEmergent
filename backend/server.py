@@ -534,6 +534,11 @@ async def startup_event():
 # Include API router
 app.include_router(api_router)
 
+# Simple root route for testing
+@app.get("/")
+async def root():
+    return {"message": "ConvoTalk API is running"}
+
 # Combine FastAPI with Socket.IO
 socket_app = socketio.ASGIApp(sio, app)
 
