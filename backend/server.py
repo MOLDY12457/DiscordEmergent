@@ -398,7 +398,7 @@ async def get_current_user_info(request: Request):
     }
 
 # Chat Routes
-@api_router.get("/channels", response_model=List[Channel])
+@api_router.get("/channels")
 async def get_channels(request: Request):
     current_user = await get_current_user(request)
     if not current_user:
@@ -410,14 +410,14 @@ async def get_channels(request: Request):
     channels = await db.channels.find().to_list(length=None)
     result = []
     for channel in channels:
-        # Remove MongoDB's _id field and ensure datetime fields are properly formatted
+        # Remove MongoDB's _id field 
         if '_id' in channel:
             del channel['_id']
-        # Ensure created_at is datetime, not string
-        if 'created_at' in channel and isinstance(channel['created_at'], str):
-            channel['created_at'] = datetime.fromisoformat(channel['created_at'].replace('Z', '+00:00'))
+        # Convert datetime to ISO string for JSON serialization
+        if 'created_at' in channel and hasattr(channel['created_at'], 'isoformat'):
+            channel['created_at'] = channel['created_at'].isoformat()
         
-        result.append(Channel(**channel))
+        result.append(channel)
     return result
 
 @api_router.post("/channels", response_model=Channel)
