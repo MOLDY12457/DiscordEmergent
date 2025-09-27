@@ -530,9 +530,6 @@ app.include_router(api_router)
 async def root():
     return {"message": "ConvoTalk API is running"}
 
-# Combine FastAPI with Socket.IO
-socket_app = socketio.ASGIApp(sio, app)
-
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
