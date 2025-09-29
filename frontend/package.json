@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "proxy": "https://convotalk-backend.onrender.com"
+  "proxy": "https://convotalk-backend.onrender.com",
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.10",
     "@hookform/resolvers": "^5.0.1",
