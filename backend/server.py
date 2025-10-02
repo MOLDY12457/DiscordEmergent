@@ -4,7 +4,6 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
 import os
-import logging
 import uuid
 import hashlib
 import requests
@@ -169,20 +168,16 @@ async def login(user_data: UserLogin):
         "token": token
     }
 
-@api_router.get("/auth/google/login")
-async def google_login():
+@api_router.get("/auth/google")
+async def google_login(redirect_url: str = "http://localhost:3000/chat"):
     google_client_id = os.environ.get('GOOGLE_CLIENT_ID')
-    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
-    redirect_uri = f"{frontend_url}/auth/callback"
-    
     auth_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth"
         f"?client_id={google_client_id}"
-        f"&redirect_uri={redirect_uri}"
+        f"&redirect_uri={redirect_url}"
         f"&response_type=code"
         f"&scope=openid email profile"
     )
-    
     return {"auth_url": auth_url}
 
 @api_router.post("/auth/google/callback")
@@ -194,7 +189,6 @@ async def google_callback(request: Request):
         raise HTTPException(status_code=400, detail="Code manquant")
     
     try:
-        # Exchange code for token
         token_url = "https://oauth2.googleapis.com/token"
         frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
         
@@ -212,13 +206,11 @@ async def google_callback(request: Request):
         if "access_token" not in token_info:
             raise HTTPException(status_code=400, detail="Erreur token Google")
         
-        # Get user info
         user_info_response = requests.get(
             f"https://www.googleapis.com/oauth2/v2/userinfo?access_token={token_info['access_token']}"
         )
         user_info = user_info_response.json()
         
-        # Create or get user
         existing_user = await db.users.find_one({"email": user_info["email"]})
         
         if existing_user:
@@ -319,11 +311,28 @@ async def send_message(channel_id: str, request: Request):
     message_dict = message.model_dump()
     await db.messages.insert_one(message_dict)
     
-    # Clean for response
     if '_id' in message_dict:
         del message_dict['_id']
     
     return message_dict
+
+@api_router.get("/users/online")
+async def get_online_users(request: Request):
+    current_user = await get_current_user(request)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Non authentifié")
+    
+    users = await db.users.find({"is_online": True}).to_list(length=None)
+    result = []
+    for user in users:
+        if '_id' in user:
+            del user['_id']
+        result.append({
+            "id": user["id"],
+            "username": user["username"],
+            "avatar_url": user.get("avatar_url")
+        })
+    return result
 
 # Initialize default channel
 @app.on_event("startup")
@@ -338,10 +347,8 @@ async def startup_event():
         )
         await db.channels.insert_one(channel.model_dump())
 
-# Include router
 app.include_router(api_router)
 
-# For Render
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8001))
